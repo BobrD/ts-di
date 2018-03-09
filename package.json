@@ -11,6 +11,9 @@
     "testMatch": [
       "<rootDir>/test/**/*.(ts)"
     ],
+    "testPathIgnorePatterns": [
+      "/fixtures/"
+    ],
     "transform": {
       "^.+\\.tsx?$": "ts-jest"
     },
@@ -25,6 +28,7 @@
   },
   "devDependencies": {
     "@types/jest": "^22.2.0",
+    "@types/node": "^9.4.7",
     "jest": "^22.4.2",
     "ts-jest": "^22.4.1"
   },

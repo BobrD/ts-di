@@ -6,6 +6,9 @@
     "outDir": ".build",
     "lib": [
       "es2017"
+    ],
+    "types": [
+      "node"
     ]
   },
   "exclude": [

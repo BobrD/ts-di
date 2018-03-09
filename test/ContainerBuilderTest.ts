@@ -44,7 +44,7 @@ describe('ContainerBuilder', () => {
 
         const bus = await container.get<Bus>('bus');
 
-        const result = bus.handle({type: 'SUM', payload: {a: 1, b: 2}});
+        const result = bus.handle({ type: 'SUM', payload: { a: 1, b: 2 } });
 
         expect(result).toEqual(3);
     });

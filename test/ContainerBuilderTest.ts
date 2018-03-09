@@ -1,9 +1,9 @@
 import {ContainerBuilder} from '../src/ContainerBuilder';
 import {Handler} from './fixtures/Handler';
-import {Root} from '../src/DefinitionBuilder';
+import {Definition, Reference} from '../src/Definition';
 import {Compiler} from '../src/Compiler';
 import {ServiceA} from './fixtures/ServiceA';
-import {Reference, Tag} from '../src/Definition';
+import {Tag} from '../src/Definition';
 import {BusPass} from './fixtures/BusPass';
 import {Bus} from './fixtures/Bus';
 import * as path from 'path';
@@ -12,34 +12,31 @@ describe('ContainerBuilder', () => {
     it('build container', async () => {
         const builder = new ContainerBuilder(new Compiler(), path.resolve(__dirname + '/../'));
 
-        const definitions = new Root()
-            .define(b => b
-                .id('bus')
-                .resource(
+
+        builder.addDefinitions(
+            new Definition()
+                .setId('bus')
+                .setResource(
                     '/test/fixtures/Bus',
                     'Bus'
-                )
-            )
-            .define(b => b
-                .id('handler')
-                .resource(
+                ),
+
+            new Definition()
+                .setId('handler')
+                .setResource(
                     '/test/fixtures/Handler',
                     'Handler'
                 )
-                .arguments(new Reference('service_a'))
-                .tags(new Tag('handler', {'type': 'SUM'}))
-            )
-            .define(b => b
-                .id('service_a')
-                .resource(
+                .addArguments(new Reference('service_a'))
+                .addTags(new Tag('handler', {'type': 'SUM'})),
+
+            new Definition()
+                .setId('service_a')
+                .setResource(
                     '/test/fixtures/ServiceA',
                     'ServiceA'
                 )
-            )
-            .build()
-        ;
-
-        builder.addDefinitions(...definitions);
+        );
 
         builder.getCompiler().addPass(new BusPass());
 

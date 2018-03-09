@@ -1,26 +1,27 @@
-import {Definition, Tag} from './Definition';
+import {Tag} from './Definition';
 import {ContainerInterface} from './ContainerInterface';
 import {Container} from './Container';
 import {Resource} from './Resource';
 import {Compiler} from './Compiler';
+import {Definition} from './Definition';
 
 export class ContainerBuilder {
-    private _definitions: {[id: string]: Definition<any>} = {};
+    private _definitions: {[id: string]: Definition} = {};
 
     private _factories: {[id: string]: () => any} = {};
 
     constructor(private _compiler: Compiler, private _projectRootDir: string) {}
 
-    addDefinitions<T>(...definitions: Definition<T>[]) {
-        definitions.forEach(definition => this._definitions[definition.id] = definition);
+    addDefinitions<T>(...definitions: Definition[]) {
+        definitions.forEach(definition => this._definitions[definition.getId()] = definition);
     }
 
-    getDefinitions(): Definition<any>[] {
+    getDefinitions(): Definition[] {
         return Object.keys(this._definitions).map(id => this._definitions[id]);
     }
 
-    findDefinition(id: string): Definition<any> | undefined {
-        return this.getDefinitions().find(d => d.id === id);
+    findDefinition(id: string): Definition | undefined {
+        return this.getDefinitions().find(d => d.getId() === id);
     }
 
     getCompiler(): Compiler {
@@ -42,8 +43,8 @@ export class ContainerBuilder {
     findTaggedServiceIds(name: string): string[] {
         return this
             .getDefinitions()
-            .filter(({tags}) => -1 !== tags.findIndex(t => t.name === name))
-            .map(({id}) => id)
+            .filter(def => -1 !== def.getTags().findIndex(t => t.name === name))
+            .map(def => def.getId())
         ;
     }
 
@@ -51,7 +52,7 @@ export class ContainerBuilder {
         const allTags = {};
 
         this.getDefinitions()
-            .forEach(({tags}) => tags.forEach(tag => allTags[tag.name] = tag))
+            .forEach(def => def.getTags().forEach(tag => allTags[tag.name] = tag))
         ;
 
         return Object.values(allTags);
@@ -69,7 +70,7 @@ export class ContainerBuilder {
         for (const id of Object.keys(this._definitions)) {
             const factory = await this.getFactory(id);
 
-            container.set(id, factory, this._definitions[id].shared);
+            container.set(id, factory, this._definitions[id].isShared());
         }
 
         return container;
@@ -79,7 +80,7 @@ export class ContainerBuilder {
         if (! this._factories.hasOwnProperty(id)) {
             const definition = this._definitions[id];
 
-            this._factories[id] = await definition.factoryBuilder.createFactory(definition, this);
+            this._factories[id] = await definition.getFactoryBuilder().createFactory(definition, this);
         }
 
         return this._factories[id];

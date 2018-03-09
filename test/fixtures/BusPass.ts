@@ -1,6 +1,7 @@
 import {CompilerPassInterface} from '../../src/Compiler';
 import {ContainerBuilder} from '../../src/ContainerBuilder';
-import {MethodCall, Reference, Tag} from '../../src/Definition';
+import {Tag} from '../../src/Definition';
+import {MethodCall, Reference} from "../../src/Definition";
 
 export class BusPass implements CompilerPassInterface {
 
@@ -12,9 +13,9 @@ export class BusPass implements CompilerPassInterface {
         handlerIds.forEach(id => {
             const handlerDefinition = containerBuilder.findDefinition(id);
 
-            const tag: Tag = handlerDefinition.tags.find(tag => tag.name === 'handler');
+            const tag: Tag = handlerDefinition.getTags().find(tag => tag.name === 'handler');
 
-            busDefinition.calls.push(
+            busDefinition.addMethodCalls(
                 new MethodCall(
                     'addHandler',
                     [new Reference(id), tag.atribures['type']]

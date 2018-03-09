@@ -6,23 +6,24 @@ import {ServiceA} from './fixtures/ServiceA';
 import {Reference, Tag} from '../src/Definition';
 import {BusPass} from './fixtures/BusPass';
 import {Bus} from './fixtures/Bus';
+import * as path from 'path';
 
 describe('ContainerBuilder', () => {
     it('build container', async () => {
-        const builder = new ContainerBuilder(new Compiler());
+        const builder = new ContainerBuilder(new Compiler(), path.resolve(__dirname + '/../'));
 
         const definitions = new Root()
             .define(b => b
                 .id('bus')
                 .resource(
-                    '/home/bobr/Projects/ts-cassandra/ts-dependency-injection/test/fixtures/Bus',
+                    '/test/fixtures/Bus',
                     'Bus'
                 )
             )
             .define(b => b
                 .id('handler')
                 .resource(
-                    '/home/bobr/Projects/ts-cassandra/ts-dependency-injection/test/fixtures/Handler',
+                    '/test/fixtures/Handler',
                     'Handler'
                 )
                 .arguments(new Reference('service_a'))
@@ -31,7 +32,7 @@ describe('ContainerBuilder', () => {
             .define(b => b
                 .id('service_a')
                 .resource(
-                    '/home/bobr/Projects/ts-cassandra/ts-dependency-injection/test/fixtures/ServiceA',
+                    '/test/fixtures/ServiceA',
                     'ServiceA'
                 )
             )

@@ -9,7 +9,7 @@ export class ContainerBuilder {
 
     private _factories: {[id: string]: () => any} = {};
 
-    constructor(private _compiler: Compiler) {}
+    constructor(private _compiler: Compiler, private _projectRootDir: string) {}
 
     addDefinitions<T>(...definitions: Definition<T>[]) {
         definitions.forEach(definition => this._definitions[definition.id] = definition);
@@ -86,7 +86,9 @@ export class ContainerBuilder {
     }
 
     async resolveResource(resource: Resource) {
-        const file = await import(resource.path);
+        const absolutePath = this._projectRootDir + resource.path;
+
+        const file = await import(absolutePath);
 
         return file[resource.name];
     }

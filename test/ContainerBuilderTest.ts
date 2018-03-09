@@ -10,7 +10,7 @@ import { Bus } from './fixtures/Bus';
 
 describe('ContainerBuilder', () => {
     it('build container', async () => {
-        const builder = new ContainerBuilder(new Compiler());
+        const builder = new ContainerBuilder(new Compiler(), path.resolve(__dirname + '/../'));
 
         const definitions = new Root()
             .define(b => b

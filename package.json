@@ -23,6 +23,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@types/node": "^9.4.7",
     "typescript": "^2.7.2"
   },
   "devDependencies": {

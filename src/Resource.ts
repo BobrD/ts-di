@@ -1,9 +1,9 @@
-export interface ResourceInterface {
-    resolve(): any;
+export interface ResourceInterface<T> {
+    resolve(): T;
 }
 
 // for node.js env
-export class FileResource implements ResourceInterface {
+export class FileResource<T> implements ResourceInterface<T> {
     constructor(public path: string, public name: string) {
     }
 
@@ -13,11 +13,11 @@ export class FileResource implements ResourceInterface {
 }
 
 // for browser env
-export class ObjectResource implements ResourceInterface {
-    constructor(public object: any) {
+export class ObjectResource<T> implements ResourceInterface<T> {
+    constructor(public object: T) {
     }
 
-    resolve(rootDir?: string): any {
+    resolve(): T {
         return this.object;
     }
 }

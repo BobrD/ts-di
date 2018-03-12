@@ -2,8 +2,10 @@ import {ContainerInterface} from './ContainerInterface';
 import {ServiceNotFoundException} from './Exception/ServiceNotFoundException';
 import {containerId} from './containerId';
 
+export type Factory<T> = () => T;
+
 type FactoryRecord<T> = {
-    factory: () => T;
+    factory: Factory<T>;
     shared: boolean;
 };
 
@@ -44,7 +46,7 @@ export class Container implements ContainerInterface {
         return this._services[id] = service;
     }
 
-    set<T>(id: string, factory: () => T, shared: boolean): void {
+    set<T>(id: string, factory: Factory<T>, shared: boolean): void {
         this._factories[id] = {factory, shared};
     }
 

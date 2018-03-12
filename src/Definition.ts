@@ -16,11 +16,11 @@ export class Tag {
     }
 }
 
-export class Factory {
-    constructor(public resource: ResourceInterface, public method: string) {}
+export class Factory<T> {
+    constructor(public resource: ResourceInterface<T>, public method: string) {}
 }
 
-export class Definition {
+export class Definition<T> {
     private _arguments: string[] = [];
 
     private _shared = true;
@@ -31,11 +31,11 @@ export class Definition {
 
     private _tags: Tag[] = [];
 
-    private _factoryBuilder: ClassFactoryBuilder<any>;
+    private _factoryBuilder: ClassFactoryBuilder<T>;
 
-    private _resource?: ResourceInterface;
+    private _resource?: ResourceInterface<T>;
 
-    private _factory?: Factory;
+    private _factory?: Factory<T>;
 
     setClass(ctr: any): this {
         this._resource = new ObjectResource(ctr);
@@ -101,11 +101,11 @@ export class Definition {
         return this._tags;
     }
 
-    getFactoryBuilder(): FactoryBuilderInterface<any> {
+    getFactoryBuilder(): FactoryBuilderInterface<T> {
         return this._factoryBuilder;
     }
 
-    getFactory(): Factory | undefined {
+    getFactory(): Factory<T> | undefined {
         return this._factory;
     }
 

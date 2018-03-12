@@ -1,12 +1,12 @@
 import {Tag} from './Definition';
 import {ContainerInterface} from './ContainerInterface';
-import {Container} from './Container';
+import {Container, Factory} from './Container';
 import {Compiler} from './Compiler';
 import {Definition} from './Definition';
 import {containerId} from './containerId';
 
 export class ContainerBuilder implements ContainerInterface {
-    private _definitions: {[id: string]: Definition} = {};
+    private _definitions: {[id: string]: Definition<any>} = {};
 
     private _factories: {[id: string]: () => any} = {};
 
@@ -28,15 +28,15 @@ export class ContainerBuilder implements ContainerInterface {
         return this._container.getIds();
     }
 
-    addDefinitions<T>(...definitions: Definition[]) {
+    addDefinitions(...definitions: Definition<any>[]) {
         definitions.forEach(definition => this._definitions[definition.getId()] = definition);
     }
 
-    getDefinitions(): Definition[] {
+    getDefinitions(): Definition<any>[] {
         return Object.keys(this._definitions).map(id => this._definitions[id]);
     }
 
-    findDefinition(id: string): Definition | undefined {
+    findDefinition<T>(id: string): Definition<T> | undefined {
         return this.getDefinitions().find(d => d.getId() === id);
     }
 
@@ -96,9 +96,9 @@ export class ContainerBuilder implements ContainerInterface {
         Object.entries(builder._factories).forEach(([id, factory]) => this._factories[id] = factory);
     }
 
-    private getFactory(id: string): () => any {
+    private getFactory<T>(id: string): Factory<T> {
         if (id === containerId) {
-            return () => this._container;
+            return () => this._container as any;
         }
 
         if (-1 !== this._loading.findIndex(c => c === id)) {

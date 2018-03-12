@@ -16,26 +16,17 @@ describe('ContainerBuilder', () => {
         builder.addDefinitions(
             new Definition()
                 .setId('bus')
-                .setResource(
-                    '/test/fixtures/Bus',
-                    'Bus'
-                ),
+                .setClass(Bus),
 
             new Definition()
                 .setId('handler')
-                .setResource(
-                    '/test/fixtures/Handler',
-                    'Handler'
-                )
+                .setClass(Handler)
                 .addArguments(new Reference('service_a'))
                 .addTags(new Tag('handler', {'type': 'SUM'})),
 
             new Definition()
                 .setId('service_a')
-                .setResource(
-                    '/test/fixtures/ServiceA',
-                    'ServiceA'
-                )
+                .setClass(ServiceA)
         );
 
         builder.getCompiler().addPass(new BusPass());

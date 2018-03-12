@@ -1,7 +1,7 @@
 import {Tag} from './Definition';
-import {ContainerInterface} from './ContainerInterface';
+import {containerId, ContainerInterface} from './ContainerInterface';
 import {Container} from './Container';
-import {Resource} from './Resource';
+import {ResourceInterface} from './Resource';
 import {Compiler} from './Compiler';
 import {Definition} from './Definition';
 
@@ -10,7 +10,11 @@ export class ContainerBuilder {
 
     private _factories: {[id: string]: () => any} = {};
 
-    constructor(private _compiler: Compiler, private _projectRootDir: string) {}
+    private _loading: string[] = [];
+
+    private _container = new Container();
+
+    constructor(private _compiler: Compiler, private _projectRootDir?: string) {}
 
     addDefinitions<T>(...definitions: Definition[]) {
         definitions.forEach(definition => this._definitions[definition.getId()] = definition);
@@ -65,32 +69,48 @@ export class ContainerBuilder {
     async build(): Promise<ContainerInterface> {
         this._compiler.compile(this);
 
-        const container = new Container();
-
         for (const id of Object.keys(this._definitions)) {
             const factory = await this.getFactory(id);
 
-            container.set(id, factory, this._definitions[id].isShared());
+            this._container.set(id, factory, this._definitions[id].isShared());
         }
 
-        return container;
+        return this._container;
+    }
+
+    merge(builder: ContainerBuilder) {
+        Object.entries(builder._definitions).forEach(([id, definition]) => this._definitions[id] = definition);
+
+        Object.entries(builder._factories).forEach(([id, factory]) => this._factories[id] = factory);
     }
 
     async getFactory(id: string) {
+        if (id === containerId) {
+            return () => this._container;
+        }
+
+        if (-1 !== this._loading.findIndex(c => c === id)) {
+            throw new Error('Circle reference.');
+        }
+
+        this._loading.push(id);
+
         if (! this._factories.hasOwnProperty(id)) {
             const definition = this._definitions[id];
+
+            if (undefined === definition) {
+                throw new Error(`Definition with id: "${id}" not found.`);
+            }
 
             this._factories[id] = await definition.getFactoryBuilder().createFactory(definition, this);
         }
 
+        this._loading = this._loading.filter(c => c !== id);
+
         return this._factories[id];
     }
 
-    async resolveResource(resource: Resource) {
-        const absolutePath = this._projectRootDir + resource.path;
-
-        const file = await import(absolutePath);
-
-        return file[resource.name];
+    async resolveResource(resource: ResourceInterface) {
+        return resource.resolve(this._projectRootDir);
     }
 }

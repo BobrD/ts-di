@@ -6,11 +6,10 @@ import {ServiceA} from './fixtures/ServiceA';
 import {Tag} from '../src/Definition';
 import {BusPass} from './fixtures/BusPass';
 import {Bus} from './fixtures/Bus';
-import * as path from 'path';
 
 describe('ContainerBuilder', () => {
-    it('build container', async () => {
-        const builder = new ContainerBuilder(new Compiler(), path.resolve(__dirname + '/../'));
+    it('build container', () => {
+        const builder = new ContainerBuilder(new Compiler());
 
 
         builder.addDefinitions(
@@ -31,12 +30,15 @@ describe('ContainerBuilder', () => {
 
         builder.getCompiler().addPass(new BusPass());
 
-        const container = await builder.build();
+        const container = builder.build();
 
-        const bus = await container.get<Bus>('bus');
+        const bus = container.get<Bus>('bus');
 
         const result = bus.handle({ type: 'SUM', payload: { a: 1, b: 2 } });
 
+        const handler = container.get('handler');
+
         expect(result).toEqual(3);
+        expect(handler).toBe(bus.getHandlers()['SUM']);
     });
 });

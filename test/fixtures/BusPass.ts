@@ -1,7 +1,7 @@
 import {CompilerPassInterface} from '../../src/Compiler';
 import {ContainerBuilder} from '../../src/ContainerBuilder';
 import {Tag} from '../../src/Definition';
-import {MethodCall, Reference} from "../../src/Definition";
+import {MethodCall, Reference} from '../../src/Definition';
 
 export class BusPass implements CompilerPassInterface {
 

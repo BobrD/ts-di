@@ -10,8 +10,7 @@ export interface IHandler {
 }
 
 export class Handler implements IHandler {
-    constructor(private _serviceA: ServiceA) {
-    }
+    constructor(private _serviceA: ServiceA) {}
 
     handle(command: {payload: {a: number, b: number}, type: 'SUM'}) {
         return this._serviceA.doWork(command.payload.a, command.payload.b);

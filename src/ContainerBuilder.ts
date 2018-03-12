@@ -1,11 +1,11 @@
 import {Tag} from './Definition';
-import {containerId, ContainerInterface} from './ContainerInterface';
+import {ContainerInterface} from './ContainerInterface';
 import {Container} from './Container';
-import {ResourceInterface} from './Resource';
 import {Compiler} from './Compiler';
 import {Definition} from './Definition';
+import {containerId} from './containerId';
 
-export class ContainerBuilder {
+export class ContainerBuilder implements ContainerInterface {
     private _definitions: {[id: string]: Definition} = {};
 
     private _factories: {[id: string]: () => any} = {};
@@ -14,7 +14,19 @@ export class ContainerBuilder {
 
     private _container = new Container();
 
-    constructor(private _compiler: Compiler, private _projectRootDir?: string) {}
+    constructor(private _compiler: Compiler) {}
+
+    has(id: string): boolean {
+        return this._definitions.hasOwnProperty(id);
+    }
+
+    get<T>(id: string): T {
+        return this._container.get<T>(id);
+    }
+
+    getIds(): string[] {
+        return this._container.getIds();
+    }
 
     addDefinitions<T>(...definitions: Definition[]) {
         definitions.forEach(definition => this._definitions[definition.getId()] = definition);
@@ -66,11 +78,11 @@ export class ContainerBuilder {
         // todo
     }
 
-    async build(): Promise<ContainerInterface> {
+    build(): ContainerInterface {
         this._compiler.compile(this);
 
         for (const id of Object.keys(this._definitions)) {
-            const factory = await this.getFactory(id);
+            const factory = this.getFactory(id);
 
             this._container.set(id, factory, this._definitions[id].isShared());
         }
@@ -78,13 +90,13 @@ export class ContainerBuilder {
         return this._container;
     }
 
-    merge(builder: ContainerBuilder) {
+    merge(builder: ContainerBuilder): void {
         Object.entries(builder._definitions).forEach(([id, definition]) => this._definitions[id] = definition);
 
         Object.entries(builder._factories).forEach(([id, factory]) => this._factories[id] = factory);
     }
 
-    async getFactory(id: string) {
+    private getFactory(id: string): () => any {
         if (id === containerId) {
             return () => this._container;
         }
@@ -93,24 +105,18 @@ export class ContainerBuilder {
             throw new Error('Circle reference.');
         }
 
+        if (this._factories.hasOwnProperty(id)) {
+            return this._factories[id];
+        }
+
         this._loading.push(id);
 
-        if (! this._factories.hasOwnProperty(id)) {
-            const definition = this._definitions[id];
+        const definition = this._definitions[id];
 
-            if (undefined === definition) {
-                throw new Error(`Definition with id: "${id}" not found.`);
-            }
-
-            this._factories[id] = await definition.getFactoryBuilder().createFactory(definition, this);
-        }
+        this._factories[id] = definition.getFactoryBuilder().createFactory(definition, this);
 
         this._loading = this._loading.filter(c => c !== id);
 
         return this._factories[id];
-    }
-
-    async resolveResource(resource: ResourceInterface) {
-        return resource.resolve(this._projectRootDir);
     }
 }

@@ -1,9 +1,8 @@
-export const containerId = 'service_container';
 
 export interface ContainerInterface {
-    has(id: string): Promise<boolean>;
+    has(id: string): boolean;
 
-    get<T>(id: string): Promise<T>;
+    get<T>(id: string): T;
 
     getIds(): string[];
 

@@ -1,47 +1,39 @@
 import {ContainerBuilder} from './ContainerBuilder';
-import { Reference} from './Definition';
+import {Reference} from './Definition';
 import {Definition} from './Definition';
 
 export interface FactoryBuilderInterface<T> {
-    createFactory(definition: Definition, containerBuilder: ContainerBuilder): Promise<() => Promise<T>>;
+    createFactory(definition: Definition, containerBuilder: ContainerBuilder): () => T;
 }
 
 abstract class AbstractFactoryBuilder<T> implements FactoryBuilderInterface<T> {
 
-    abstract createFactory(definition: Definition, containerBuilder: ContainerBuilder): Promise<() => Promise<T>>;
+    abstract createFactory(definition: Definition, containerBuilder: ContainerBuilder): () => T;
 
-    protected async resolveArguments(args: any[], containerBuilder: ContainerBuilder) {
-        return Promise.all(
-            args.map(arg => {
-                if (arg instanceof Reference) {
-                    return containerBuilder.getFactory(arg.id);
-                }
+    protected resolveArguments(args: any[], containerBuilder: ContainerBuilder) {
+        return args.map(arg => {
+            if (arg instanceof Reference) {
+                return containerBuilder.get(arg.id);
+            }
 
-                return () => arg;
-            })
-        );
+            return arg;
+        });
     }
 }
 
 export class ClassFactoryBuilder<T> extends AbstractFactoryBuilder<T> {
 
-    async createFactory(definition: Definition, containerBuilder: ContainerBuilder): Promise<() => Promise<T>> {
-        const classCtr = await containerBuilder.resolveResource(definition.getResource());
+    createFactory(definition: Definition, containerBuilder: ContainerBuilder): () => T {
+        return () => {
+            const classCtr = definition.getResource().resolve();
 
-        const args = await this.resolveArguments(definition.getArguments(), containerBuilder);
+            const args = this.resolveArguments(definition.getArguments(), containerBuilder);
 
-        const calls = [];
+            const instance = new classCtr(...args);
 
-        for (const call of definition.getCalls()) {
-            const args = await this.resolveArguments(call.args, containerBuilder);
-
-            calls.push([call.methodName, args.map(arg => arg())]);
-        }
-
-        return async () => {
-            const instance = new classCtr(...args.map(arg => arg()));
-
-            calls.forEach(([name, args]) => instance[name](...args));
+            definition.getCalls().forEach(({methodName, args}) => {
+                instance[methodName](...this.resolveArguments(args, containerBuilder));
+            });
 
             return instance;
         };
@@ -50,15 +42,17 @@ export class ClassFactoryBuilder<T> extends AbstractFactoryBuilder<T> {
 
 export class FactoryFactoryBuilder<T> extends AbstractFactoryBuilder<T>  {
 
-    async createFactory(definition: Definition, containerBuilder: ContainerBuilder): Promise<() => Promise<T>> {
-        const factoryDefinition = definition.getFactory();
+    createFactory(definition: Definition, containerBuilder: ContainerBuilder): () => T {
+        return () => {
+            const {resource, method} = definition.getFactory();
 
-        const factoryCtr = await containerBuilder.resolveResource(factoryDefinition.resource);
+            const factoryCtr = resource.resolve();
 
-        const factory = new factoryCtr;
+            const factory = new factoryCtr();
 
-        const args = await this.resolveArguments(definition.getArguments(), containerBuilder);
+            const args = this.resolveArguments(definition.getArguments(), containerBuilder);
 
-        return async () => await factory[factoryDefinition.method](...args.map(arg => arg()));
+            return factory[method](...args);
+        };
     }
 }

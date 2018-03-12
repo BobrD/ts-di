@@ -1,5 +1,5 @@
 import {ClassFactoryBuilder, FactoryBuilderInterface, FactoryFactoryBuilder} from './FactoryBuilder';
-import {FileResource, ObjectResource, ResourceInterface} from './Resource';
+import {ObjectResource, ResourceInterface} from './Resource';
 
 export class Reference {
     constructor(public id: string) {
@@ -20,17 +20,7 @@ export class Factory {
     constructor(public resource: ResourceInterface, public method: string) {}
 }
 
-export enum ResourceType {
-    class = 'class',
-    factory = 'factory'
-}
-
 export class Definition {
-    private _factories = {
-        [ResourceType.class]: () => new ClassFactoryBuilder(),
-        [ResourceType.factory]: () => new FactoryFactoryBuilder()
-    };
-
     private _arguments: string[] = [];
 
     private _shared = true;
@@ -47,32 +37,18 @@ export class Definition {
 
     private _factory?: Factory;
 
-    setResource(path: string, name: string, type: ResourceType): this {
-        if (true) {
-            throw new Error('File resource not supported in browser env');
-        }
-
-        this._resource = this.createResource(path, name);
-
-        this._factoryBuilder = this.createFactoryBuilder(type);
-
-        return this;
-    }
-
     setClass(ctr: any): this {
-        this._resource = this.createResource(ctr);
+        this._resource = new ObjectResource(ctr);
 
-        this._factoryBuilder = this.createFactoryBuilder(ResourceType.class);
+        this._factoryBuilder = new ClassFactoryBuilder();
 
         return this;
     }
 
-    setFactory(method: string, path: string, name: string);
-    setFactory(method: string, ctr: any);
-    setFactory(first: any, second: any, third?: any): this {
-        this._factory = new Factory(this.createResource(second, third), first);
+    setFactory(method: string, ctr: any): this {
+        this._factory = new Factory(new ObjectResource(ctr), method);
 
-        this._factoryBuilder = this.createFactoryBuilder(ResourceType.factory);
+        this._factoryBuilder = new FactoryFactoryBuilder();
 
         return this;
     }
@@ -135,39 +111,6 @@ export class Definition {
 
     isShared() {
         return this._shared;
-    }
-
-    private createResource(ctr: any): ResourceInterface;
-    private createResource(file: string, path: string): ResourceInterface;
-    private createResource(first: any, second?: any) {
-        const args = [...arguments].filter(arg => arg !== undefined);
-
-        if (args.length === 2) {
-            throw new Error('File resource not supported.');
-        }
-
-        if (false) { // todo fot node env should return FileResource
-            // @ts-ignore
-            const ctrModule = module.parent.children.find(({exports}) => this.findExport(exports, first));
-
-            if (void 0 === ctrModule) {
-                throw new Error('Module not found');
-            }
-
-            return new FileResource(ctrModule.filename, this.findExport(ctrModule.exports, first))
-        }
-
-        return new ObjectResource(first);
-    }
-
-
-    private createFactoryBuilder(type: ResourceType) {
-        return this._factories[type]();
-    }
-
-    private findExport(moduleExport: {}, ctr: new() => any) {
-        return Object.keys(moduleExport)
-            .find(exportName => moduleExport[exportName] === ctr);
     }
 }
 

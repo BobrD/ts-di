@@ -1,5 +1,5 @@
 export interface ResourceInterface {
-    resolve(rootDir?: string): Promise<any>;
+    resolve(): any;
 }
 
 // for node.js env
@@ -7,12 +7,8 @@ export class FileResource implements ResourceInterface {
     constructor(public path: string, public name: string) {
     }
 
-    async resolve(rootDir?: string): Promise<any> {
-        const absolutePath = rootDir + this.path;
-
-        const file = await import(absolutePath);
-
-        return file[this.name];
+    resolve(): any {
+        throw new Error('Not implemented.');
     }
 }
 
@@ -21,7 +17,7 @@ export class ObjectResource implements ResourceInterface {
     constructor(public object: any) {
     }
 
-    async resolve(rootDir?: string): Promise<any> {
+    resolve(rootDir?: string): any {
         return this.object;
     }
 }

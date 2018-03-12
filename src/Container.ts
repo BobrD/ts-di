@@ -1,5 +1,6 @@
-import {containerId, ContainerInterface} from './ContainerInterface';
+import {ContainerInterface} from './ContainerInterface';
 import {ServiceNotFoundException} from './Exception/ServiceNotFoundException';
+import {containerId} from './containerId';
 
 type FactoryRecord<T> = {
     factory: () => T;
@@ -11,7 +12,7 @@ export class Container implements ContainerInterface {
 
     private _services: {[id: string]: any} = {};
 
-    async has(id: string): Promise<boolean> {
+    has(id: string): boolean {
         return this._factories.hasOwnProperty(id);
     }
 
@@ -19,12 +20,12 @@ export class Container implements ContainerInterface {
         return Object.keys(this._factories);
     }
 
-    async get<T>(id: string): Promise<T> {
+    get<T>(id: string): T {
         if (id === containerId) {
             return this as any;
         }
 
-        if (! await this.has(id)) {
+        if (! this.has(id)) {
             throw new ServiceNotFoundException();
         }
 
@@ -34,7 +35,7 @@ export class Container implements ContainerInterface {
 
         const {factory, shared} = this._factories[id];
 
-        const service = await factory();
+        const service = factory();
 
         if (! shared) {
             return service;
